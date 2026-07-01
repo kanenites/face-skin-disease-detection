@@ -1,139 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skin Disease Classifier</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
-        .navbar {
-            background-color: #007bff;
-        }
-        .navbar-brand {
-            color: #fff;
-        }
-        .navbar-brand:hover {
-            color: #e2e2e2;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .card-header {
-            background-color: #007bff;
-            color: #fff;
-            border-radius: 10px 10px 0 0;
-            font-size: 24px;
-            text-align: center;
-        }
-        .card-body {
-            padding: 30px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            padding: 20px;
-            background-color: #007bff;
-            color: white;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skin Disease Detection — Kunal's Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --kl-bg:          #0A0F1E;
+    --kl-bg-card:     #161D2F;
+    --kl-border:      #1E2A40;
+    --kl-cyan:        #00D4FF;
+    --kl-cyan-dim:    #00A8CC;
+    --kl-cyan-glow:   rgba(0,212,255,0.15);
+    --kl-cyan-subtle: rgba(0,212,255,0.06);
+    --kl-text:        #F0F6FF;
+    --kl-text-muted:  #8B9BB4;
+    --kl-font:        'Space Grotesk', sans-serif;
+    --kl-font-mono:   'JetBrains Mono', monospace;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--kl-bg);
+    color: var(--kl-text);
+    font-family: var(--kl-font);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-orb {
+    position: fixed; border-radius: 50%; filter: blur(90px);
+    pointer-events: none; z-index: 0;
+    animation: orb-drift 20s ease-in-out infinite alternate;
+  }
+  .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 70%); top: -100px; left: -80px; }
+  .bg-orb-2 { width: 380px; height: 380px; background: radial-gradient(circle, rgba(0,168,204,0.05) 0%, transparent 70%); bottom: 5%; right: -60px; animation-delay: -7s; }
+  @keyframes orb-drift {
+    0% { transform: translate(0,0); } 50% { transform: translate(25px,-18px); } 100% { transform: translate(-15px,25px); }
+  }
+
+  nav {
+    position: relative; z-index: 1;
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--kl-border);
+    background: rgba(10,15,30,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo { width: 32px; height: 32px; }
+  .nav-name { font-size: 16px; font-weight: 700; color: var(--kl-text); letter-spacing: -0.3px; }
+  .nav-name span { color: var(--kl-cyan); }
+  .nav-badge {
+    font-family: var(--kl-font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--kl-cyan); background: var(--kl-cyan-glow); border: 1px solid rgba(0,212,255,0.25);
+    padding: 3px 8px; border-radius: 4px;
+  }
+
+  main {
+    position: relative; z-index: 1;
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .card {
+    background: var(--kl-bg-card); border: 1px solid var(--kl-border);
+    border-radius: 20px; width: 100%; max-width: 500px;
+    overflow: hidden; position: relative;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--kl-cyan), var(--kl-cyan-dim), transparent);
+  }
+
+  .card-header { padding: 36px 36px 0; }
+  .card-label {
+    font-family: var(--kl-font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--kl-cyan); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-label::before { content: ''; width: 18px; height: 1px; background: var(--kl-cyan); opacity: 0.5; }
+  .card-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: var(--kl-text); margin-bottom: 6px; }
+  .card-sub { font-size: 13px; color: var(--kl-text-muted); line-height: 1.5; }
+
+  .card-body { padding: 28px 36px 36px; }
+
+  .conditions {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px;
+  }
+  .condition-tag {
+    font-family: var(--kl-font-mono); font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 4px;
+    background: var(--kl-cyan-glow); color: var(--kl-cyan); border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .upload-zone {
+    border: 1.5px dashed var(--kl-border); border-radius: 12px;
+    padding: 30px 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.25s, background 0.25s;
+    position: relative; margin-bottom: 18px;
+  }
+  .upload-zone:hover { border-color: var(--kl-cyan); background: var(--kl-cyan-subtle); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { margin-bottom: 10px; }
+  .upload-text { font-size: 13px; color: var(--kl-text-muted); margin-bottom: 4px; }
+  .upload-text strong { color: var(--kl-cyan); }
+  .upload-hint { font-family: var(--kl-font-mono); font-size: 10px; color: var(--kl-text-muted); opacity: 0.6; }
+  .file-name { font-family: var(--kl-font-mono); font-size: 11px; color: var(--kl-cyan); margin-top: 8px; display: none; }
+
+  /* Image preview */
+  .img-preview { display: none; width: 100%; border-radius: 10px; margin-bottom: 18px; max-height: 200px; object-fit: cover; border: 1px solid var(--kl-border); }
+
+  .btn-primary {
+    width: 100%; background: var(--kl-cyan); color: var(--kl-bg);
+    font-family: var(--kl-font); font-size: 14px; font-weight: 600;
+    padding: 13px 20px; border-radius: 10px; border: none; cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s, opacity 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 0 24px rgba(0,212,255,0.4); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .progress-wrap { display: none; margin-bottom: 16px; }
+  .progress-label {
+    font-family: var(--kl-font-mono); font-size: 10px; color: var(--kl-text-muted);
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px;
+  }
+  .progress-bar { height: 3px; background: var(--kl-border); border-radius: 2px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--kl-cyan-dim), var(--kl-cyan));
+    box-shadow: 0 0 8px rgba(0,212,255,0.5);
+    animation: progress-loop 2s ease-in-out infinite;
+    width: 40%;
+  }
+  @keyframes progress-loop {
+    0% { width:0%; margin-left:0%; } 50% { width:50%; } 100% { width:0%; margin-left:100%; }
+  }
+
+  .result-wrap {
+    display: none; background: var(--kl-bg); border: 1px solid var(--kl-border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .result-label { font-family: var(--kl-font-mono); font-size: 10px; color: var(--kl-cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 10px; }
+  .result-disease { font-size: 22px; font-weight: 700; color: var(--kl-text); }
+  .result-note { font-size: 11px; color: var(--kl-text-muted); margin-top: 6px; line-height: 1.5; }
+
+  footer {
+    position: relative; z-index: 1;
+    padding: 16px 32px; border-top: 1px solid var(--kl-border);
+    text-align: center; font-family: var(--kl-font-mono);
+    font-size: 10px; color: var(--kl-text-muted); opacity: 0.6;
+  }
+</style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="#">Skin Disease Classifier</a>
-        </div>
-    </nav>
+<canvas id="bg-canvas"></canvas>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
 
-    <!-- Main Container -->
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        Upload Skin Image for Diagnosis
-                    </div>
-                    <div class="card-body">
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="fileInput" class="form-label">Choose an image</label>
-                                <input class="form-control" type="file" id="fileInput" name="file" accept="image/*" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Diagnose</button>
-                        </form>
-                        <div class="mt-3" id="result" style="display: none;">
-                            <div class="alert alert-success" role="alert">
-                                <strong>Prediction:</strong> <span id="disease"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<nav>
+  <a class="nav-brand" href="/">
+    <svg class="nav-logo" viewBox="0 0 52 52" fill="none">
+      <path d="M26 3 L47 14.5 L47 37.5 L26 49 L5 37.5 L5 14.5 Z" stroke="#00D4FF" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <path d="M26 11 L39 18.5 L39 33.5 L26 41 L13 33.5 L13 18.5 Z" fill="rgba(0,212,255,0.08)" stroke="#00D4FF" stroke-width="1" opacity="0.7"/>
+      <path d="M22 16 L22 24 L17 34 Q16 36 18 37 L34 37 Q36 36 35 34 L30 24 L30 16 Z" fill="rgba(0,212,255,0.12)" stroke="#00D4FF" stroke-width="1.2"/>
+      <line x1="21" y1="18" x2="31" y2="18" stroke="#00D4FF" stroke-width="1.2"/>
+      <circle cx="22" cy="31" r="1.5" fill="#00D4FF" opacity="0.9"/>
+      <circle cx="27" cy="33.5" r="1" fill="#00D4FF" opacity="0.7"/>
+      <circle cx="30" cy="29" r="1.2" fill="#00D4FF" opacity="0.6"/>
+    </svg>
+    <span class="nav-name">Kunal's <span>Lab</span></span>
+  </a>
+  <span class="nav-badge">Skin Disease Detection</span>
+</nav>
+
+<main>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-label">AI · Computer Vision</div>
+      <div class="card-title">Skin Disease Classifier</div>
+      <div class="card-sub">Upload a facial skin image to classify the condition using a VGG16 transfer learning model.</div>
     </div>
+    <div class="card-body">
 
-    <!-- Footer -->
-    <div class="footer">
-        <p>&copy; 2024 Skin Disease Classifier. All Rights Reserved.</p>
+      <div class="conditions">
+        <span class="condition-tag">Acne</span>
+        <span class="condition-tag">Eczema</span>
+        <span class="condition-tag">Actinic Keratosis</span>
+        <span class="condition-tag">Basal Cell Carcinoma</span>
+        <span class="condition-tag">Rosacea</span>
+      </div>
+
+      <img class="img-preview" id="imgPreview" src="" alt="Preview">
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="upload-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="10" fill="rgba(0,212,255,0.08)"/>
+            <path d="M18 22V14M18 14L15 17M18 14L21 17" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 26h12" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+        <div class="upload-hint">JPG, PNG — skin image</div>
+        <div class="file-name" id="fileName"></div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label">Analysing image</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>
+
+      <div class="result-wrap" id="resultWrap">
+        <div class="result-label">Prediction</div>
+        <div class="result-disease" id="diseaseResult"></div>
+        <div class="result-note">For research purposes only. This is not a medical diagnosis — consult a dermatologist for clinical assessment.</div>
+      </div>
+
+      <button class="btn-primary" id="submitBtn" disabled onclick="diagnose()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2L14 8L8 14M2 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Run Diagnosis
+      </button>
+
     </div>
+  </div>
+</main>
 
-    <!-- Bootstrap JS & jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<footer>Kunal's Lab · AI &amp; ML Systems · For research purposes only</footer>
 
-    <!-- Custom JS for handling form submission -->
-    <script>
-        $(document).ready(function() {
-            $('#uploadForm').on('submit', function(event) {
-                event.preventDefault();
+<script>
+/* Neural net background */
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+const nodes = Array.from({length: 45}, () => ({
+  x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+  vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2, r: Math.random()*1.4+0.6
+}));
+function drawBg() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (const n of nodes) {
+    n.x += n.vx; n.y += n.vy;
+    if (n.x<0||n.x>canvas.width) n.vx*=-1;
+    if (n.y<0||n.y>canvas.height) n.vy*=-1;
+  }
+  for (let i=0;i<nodes.length;i++) for (let j=i+1;j<nodes.length;j++) {
+    const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y, d=Math.sqrt(dx*dx+dy*dy);
+    if (d<155) { ctx.beginPath(); ctx.strokeStyle=`rgba(0,212,255,${(1-d/155)*0.15})`; ctx.lineWidth=0.5; ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); }
+  }
+  for (const n of nodes) { ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fillStyle='rgba(0,212,255,0.3)'; ctx.fill(); }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
 
-                // Clear previous result
-                $('#result').hide();
-                $('#disease').text('');
+/* File input */
+const fileInput = document.getElementById('fileInput');
+const submitBtn = document.getElementById('submitBtn');
+const fileName  = document.getElementById('fileName');
+const imgPreview = document.getElementById('imgPreview');
 
-                var formData = new FormData(this);
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) {
+    const file = fileInput.files[0];
+    submitBtn.disabled = false;
+    fileName.style.display = 'block';
+    fileName.textContent = '✓ ' + file.name;
+    const reader = new FileReader();
+    reader.onload = e => { imgPreview.src = e.target.result; imgPreview.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  }
+});
 
-                $.ajax({
-                    url: '/predict',
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        $('#result').show();
-                        $('#disease').text(response.disease);
-                    },
-                    error: function() {
-                        alert('An error occurred while processing the image.');
-                    }
-                });
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--kl-cyan)'; });
+zone.addEventListener('dragleave', () => zone.style.borderColor = '');
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.style.borderColor = '';
+  fileInput.files = e.dataTransfer.files;
+  fileInput.dispatchEvent(new Event('change'));
+});
 
-                // Reset form for new submission
-                $('#uploadForm')[0].reset();
-            });
-        });
-    </script>
+async function diagnose() {
+  if (!fileInput.files.length) return;
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  submitBtn.disabled = true;
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('resultWrap').style.display = 'none';
+
+  try {
+    const res = await fetch('/predict', { method: 'POST', body: formData });
+    document.getElementById('progressWrap').style.display = 'none';
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('diseaseResult').textContent = data.disease;
+      document.getElementById('resultWrap').style.display = 'block';
+    } else {
+      alert('Error processing the image. Please try again.');
+    }
+  } catch(e) {
+    alert('Network error. Please try again.');
+    document.getElementById('progressWrap').style.display = 'none';
+  }
+  submitBtn.disabled = false;
+}
+</script>
 </body>
 </html>
